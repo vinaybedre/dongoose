@@ -81,6 +81,17 @@ export const Dongoose = <T extends z.ZodRawShape>(schema: T, { db, name, indexes
     return (results.find((result) => result.value)?.value as SchemaFullObject) ?? null;
   };
 
+  const find = async (query: SchemaPartialObjectWithId) => {
+    schemaValidationPartialObjectWithId.parse(query);
+    if (Object.keys(query).length === 0) {
+      return null;
+    }
+    const results = await db.getMany<Array<SchemaFullObject>>(
+      Object.entries(query).map<[string, string]>(([key, value]) => [getCollectionName(schemaName, key), value]),
+    );
+    return results ?? null;
+  };
+
   // @ts-expect-error - generic type do not know that it has an id
   const findById = (id: string) => findOne({ id });
 
@@ -125,6 +136,7 @@ export const Dongoose = <T extends z.ZodRawShape>(schema: T, { db, name, indexes
   return {
     create,
     findOne,
+    find,
     findById,
     updateOne,
     updateById,
