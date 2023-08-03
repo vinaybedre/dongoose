@@ -9,7 +9,7 @@ interface DongooseOptions<T> {
 }
 
 // Helper function to generate a collection name
-const getCollectionName = (name: string, index: string) => `${name}_by_${index}`;
+const getKeysWithIndexes = (name: string, index: string) => `${name}_by_${index}`;
 
 // Helper function to update timestamps in the data
 const updateTimestamps = (data: Record<string, unknown>, isInsertion: boolean) => {
@@ -31,8 +31,8 @@ const performTransaction = (
   updateTimestamps(data, operation === 'set');
   const transaction = db.atomic();
   for (const index of indexes) {
-    const collectionName = getCollectionName(key, index);
-    transaction[operation]([collectionName, (data[index] as string).toString()], data);
+    const keysWithIndexes = getKeysWithIndexes(key, index);
+    transaction[operation]([key, keysWithIndexes, (data[index] as string).toString()], data);
   }
   return transaction.commit();
 };
@@ -76,7 +76,7 @@ export const Dongoose = <T extends z.ZodRawShape>(schema: T, { db, name, indexes
       return null;
     }
     const results = await db.getMany<Array<SchemaFullObject>>(
-      Object.entries(query).map<[string, string]>(([key, value]) => [getCollectionName(schemaName, key), value]),
+      Object.entries(query).map<[string, string]>(([key, value]) => [getKeysWithIndexes(schemaName, key), value]),
     );
     return (results.find((result) => result.value)?.value as SchemaFullObject) ?? null;
   };
@@ -86,10 +86,18 @@ export const Dongoose = <T extends z.ZodRawShape>(schema: T, { db, name, indexes
     if (Object.keys(query).length === 0) {
       return null;
     }
-    const results = await db.getMany<Array<SchemaFullObject>>(
-      Object.entries(query).map<[string, string]>(([key, value]) => [getCollectionName(schemaName, key), value]),
-    );
-    return results ?? null;
+
+    const filteredResult: SchemaFullObject[] = [];
+
+    for await (const entry of db.list<any>({ prefix: [schemaName] })) {
+      Object.entries(query).map(([key, value]) => {
+        if (entry.value[key] === value) {
+          filteredResult.push(entry.value as SchemaFullObject);
+        }
+      });
+    }
+
+    return filteredResult ?? null;
   };
 
   // @ts-expect-error - generic type do not know that it has an id
