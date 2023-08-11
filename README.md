@@ -23,7 +23,7 @@ Dongoose is a simple ( but intelligent ), lightweight, and easy to use ORM for D
 ## Usage
 
 ```typescript
-import { d, Dongoose } from "https://deno.land/x/dongoose/mod.ts";
+import { d, Dongoose } from "https://deno.land/x/dongoose_extra/mod.ts";
 
 const db = await Deno.openKv();
 const users = Dongoose(
@@ -39,7 +39,7 @@ const users = Dongoose(
   {
     db, // Your Deno KV intance
     name: "users", // Your collection name
-    indexes: ["email", "username"],
+    primaryIndexes: ["email", "username"],
   }
 );
 
@@ -77,7 +77,7 @@ const users = Dongoose(
   {
     db,
     name: "users", // Your collection name
-    indexes: ["email", "username"],
+    primaryIndexes: ["email", "username"],
   }
 );
 ```
@@ -119,6 +119,12 @@ await users.create({
 
 ```typescript
 await users.findOne({ email: "malcatbo@wulvi.com" });
+```
+
+### find
+
+```typescript
+await users.find({ firstname: "alvis" });
 ```
 
 ### findById

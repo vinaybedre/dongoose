@@ -1,4 +1,4 @@
-import { assertEquals, assertExists, afterAll, beforeAll, describe, it } from '../deps_test.ts';
+import { afterAll, assertEquals, assertExists, beforeAll, describe, it } from '../deps_test.ts';
 import { d, Dongoose } from '../mod.ts';
 
 const schema = {
@@ -29,7 +29,7 @@ const getUserDongooseInstance = (db: Deno.Kv) =>
   Dongoose(schema, {
     db,
     name: 'users',
-    indexes: ['email', 'username'],
+    primaryIndexes: ['email', 'username'],
   });
 
 describe('schema', () => {
